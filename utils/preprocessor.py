@@ -22,28 +22,31 @@ import copy
 import cv2
 
 
-def Video_Sampler(path):
+def Video_Sampler(path, fps=25):
     cap = cv2.VideoCapture(path)
+    cap = cap.set(cv2.CAP_PROP_POS_MSEC, fps)
     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    print(cap.get(cv2.CAP_PROP_FPS))
-
-
-    fps = 30
-    t = 128
     count = 0
-    video = []
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
 
     while cap.isOpened():
+        # file name setting
+        file_name = path.split('/')
+        file_name = ''.join(file_name[-3:])
+
+        # get image from video
         ret, img = cap.read()
 
-        if int(cap.get(1)) % fps == 0:
-            count += 1
-            video.append(img)
-            print(count)
-        if count >= t:
+        out = cv2.VideoWriter(file_name+str(count)+'.avi', fourcc, 30.0, 128, 128)
+
+        if not ret:
             break
+
+
+
+
 
     return video
 
