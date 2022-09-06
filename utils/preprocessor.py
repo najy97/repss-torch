@@ -10,7 +10,7 @@ from torchvision import datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchvision import models
-import os
+
 
 from torchvision import utils
 import matplotlib.pyplot as plt
@@ -21,35 +21,24 @@ import time
 import copy
 import cv2
 
+from utils.video_to_dataset import video_preprocessor
+from utils.csv_to_label import label_preprocessor
+import multiprocessing
+import h5py
+import os
 
-def Video_Sampler(path, fps=25):
-    cap = cv2.VideoCapture(path)
-    cap = cap.set(cv2.CAP_PROP_POS_MSEC, fps)
-    length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    count = 0
-    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+def preprocessing():
+    manager = multiprocessing.Manager()
+    return_dict = manager.dict()
 
-    while cap.isOpened():
-        # file name setting
-        file_name = path.split('/')
-        file_name = ''.join(file_name[-3:])
+def Preprocess_Dataset(path, return_dict):
+    for v in os.listdir(path):
+        for source in os.listdir(path+'/'+v):
+            if source != 'source4':
+                preprocessed_video = video_preprocessor(path+'/'+v+'/'+source+'/video.avi')
+                preprocessed_label = label_preprocessor(path + '/' + v + '/' + source + '/wave.csv',
+                                                        preprocessed_video.shape[0]*preprocessed_video.shape[1])  # n 블록 * 32 프레임
+                return_dict[path[-3:]+'_'+v+'_'+source] = {'preprocessed_video': preprocessed_video,
+                                                           'preprocessed_label': preprocessed_label}
 
-        # get image from video
-        ret, img = cap.read()
-
-        out = cv2.VideoWriter(file_name+str(count)+'.avi', fourcc, 30.0, 128, 128)
-
-        if not ret:
-            break
-
-
-
-
-
-    return video
-
-
-video = Video_Sampler('C:/V4V/train_val/data/F001_T1/video.mkv')
-print(np.shape(video))
+if __name__=='__main__':
