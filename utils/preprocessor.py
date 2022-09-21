@@ -1,27 +1,7 @@
 # import package
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torchsummary import summary
-from torch import optim
-
-from torchvision import datasets
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
-from torchvision import models
-
-from torchvision import utils
-import matplotlib.pyplot as plt
-
-import numpy as np
-from torchsummary import summary
-import time
-import copy
-import cv2
-
-from utils.video_to_dataset import video_preprocessor
-from utils.csv_to_label import label_preprocessor
+from video_to_dataset import video_preprocessor
+from csv_to_label import label_preprocessor
 import multiprocessing
 import h5py
 import os
@@ -48,7 +28,23 @@ def preprocessing(save_root_path: str = "C:/preprocessed_dataset/",
         proc.join()  # 해당 프로세스가 종료될 때 까지 대기
 
     train = int(len(return_dict.keys()) * train_ratio)  # train/validation 분할
-    train_file = h5py.File(save_root_path + 'train.hdf5', "w")
+
+    index = 0
+    for index, data_path in enumerate(return_dict.keys()[:train]):
+        if index % 1700 == 0:
+            train_file = h5py.File(save_root_path + 'train' + str(index / 1700) + '.hdf5', "w")  # hdf5파일 생성(열기) 및 쓰기
+            dset = train_file.create_group(data_path)
+            dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
+            dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
+            train_file.close()
+
+    for index, data_path in enumerate(return_dict.keys()[train:]):
+        if index % 1700 == 0:
+            test_file = h5py.File(save_root_path + "test" + str(index / 1700) + '.hdf5', "w")
+            dset = test_file.create_group(data_path)
+            dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
+            dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
+            test_file.close()
 
 
 def Preprocess_Dataset(path, return_dict):

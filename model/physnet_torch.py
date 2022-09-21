@@ -35,7 +35,7 @@ class PhysNet(nn.Module):
             encoder_block(),
             decoder_block(),
             nn.AdaptiveMaxPool3d((frames, 1, 1)),
-            nn.Conv3d(64, 1, [1, 1, 1], stride=1, padding=0)
+            nn.Conv3d(64, 1, (1, 1, 1), stride=1, padding=0)
         )
 
     def forward(self, x):
