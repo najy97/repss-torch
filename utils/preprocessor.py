@@ -29,22 +29,32 @@ def preprocessing(save_root_path: str = "C:/preprocessed_dataset/",
 
     train = int(len(return_dict.keys()) * train_ratio)  # train/validation 분할
 
-    index = 0
+    index_name = 0
     for index, data_path in enumerate(return_dict.keys()[:train]):
-        if index % 1700 == 0:
-            train_file = h5py.File(save_root_path + 'train' + str(index / 1700) + '.hdf5', "w")  # hdf5파일 생성(열기) 및 쓰기
-            dset = train_file.create_group(data_path)
-            dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
-            dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
+        if index % 3 == 0:
+            # hdf5파일 생성(열기) 및 쓰기
+            train_file = h5py.File(save_root_path + 'train_' + str(index_name) + '.hdf5', "w")
+            index_name += 1
+        dset = train_file.create_group(data_path)
+        dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
+        dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
+        if index != 0 and index % 2 == 0:
             train_file.close()
+    if index % 2 != 0:
+        train_file.close()
 
+    index_name = 0
     for index, data_path in enumerate(return_dict.keys()[train:]):
-        if index % 1700 == 0:
-            test_file = h5py.File(save_root_path + "test" + str(index / 1700) + '.hdf5', "w")
-            dset = test_file.create_group(data_path)
-            dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
-            dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
+        if index % 3 == 0:
+            test_file = h5py.File(save_root_path + "test_" + str(index / 1700) + '.hdf5', "w")
+            index_name += 1
+        dset = test_file.create_group(data_path)
+        dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
+        dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
+        if index != 0 and index % 2 == 0:
             test_file.close()
+    if index % 2 != 0:
+        train_file.close()
 
 
 def Preprocess_Dataset(path, return_dict):
