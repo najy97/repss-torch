@@ -5,10 +5,11 @@ from csv_to_label import label_preprocessor
 import multiprocessing
 import h5py
 import os
+import tqdm
 
 
-def preprocessing(save_root_path: str = "C:/preprocessed_dataset/",
-                  dataset_root_path: str = "C:/VIPL_HR/data",
+def preprocessing(save_root_path: str = "D:/preprocessed_dataset/",
+                  dataset_root_path: str = "D:/VIPL_HR/data",
                   train_ratio: float = 0.8):
     manager = multiprocessing.Manager()
     return_dict = manager.dict()
@@ -19,17 +20,20 @@ def preprocessing(save_root_path: str = "C:/preprocessed_dataset/",
 
     # multiprocessing
     for index, data_path in enumerate(data_list):
-        proc = multiprocessing.Process(target=Preprocess_Dataset,
-                                       args=(dataset_root_path + '/' + data_path, return_dict))
-        process.append(proc)  # join할 프로세스 리스트 생성
-        proc.start()  # 프로세스 시작 신호
+        if 9 < index < 20:
+            proc = multiprocessing.Process(target=Preprocess_Dataset,
+                                           args=(dataset_root_path + '/' + data_path, return_dict))
+            process.append(proc)  # join할 프로세스 리스트 생성
+            proc.start()  # 프로세스 시작 신호
+
 
     for proc in process:
         proc.join()  # 해당 프로세스가 종료될 때 까지 대기
 
     train = int(len(return_dict.keys()) * train_ratio)  # train/validation 분할
 
-    index_name = 0
+    index_name = 47
+    print('saving train datasets')
     for index, data_path in enumerate(return_dict.keys()[:train]):
         if index % 3 == 0:
             # hdf5파일 생성(열기) 및 쓰기
@@ -38,22 +42,24 @@ def preprocessing(save_root_path: str = "C:/preprocessed_dataset/",
         dset = train_file.create_group(data_path)
         dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
         dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
-        if index != 0 and index % 2 == 0:
+        if index != 0 and index % 3 == 2:
             train_file.close()
-    if index % 2 != 0:
+    if index % 3 != 0:
         train_file.close()
 
-    index_name = 0
+    print('saving test datasets')
+
+    index_name = 12
     for index, data_path in enumerate(return_dict.keys()[train:]):
         if index % 3 == 0:
-            test_file = h5py.File(save_root_path + "test_" + str(index / 1700) + '.hdf5', "w")
+            test_file = h5py.File(save_root_path + "test_" + str(index_name) + '.hdf5', "w")
             index_name += 1
         dset = test_file.create_group(data_path)
         dset['preprocessed_video'] = return_dict[data_path]['preprocessed_video']
         dset['preprocessed_label'] = return_dict[data_path]['preprocessed_label']
-        if index != 0 and index % 2 == 0:
+        if index != 0 and index % 3 == 2:
             test_file.close()
-    if index % 2 != 0:
+    if index % 3 != 0:
         train_file.close()
 
 
@@ -70,6 +76,6 @@ def Preprocess_Dataset(path, return_dict):
 
 
 if __name__ == '__main__':
-    preprocessing(save_root_path="C:/preprocessed_dataset/",
-                  dataset_root_path="C:/VIPL_HR/data",
+    preprocessing(save_root_path="D:/preprocessed_dataset/",
+                  dataset_root_path="D:/VIPL_HR/data",
                   train_ratio=0.8)
